@@ -10,14 +10,32 @@ export class CreateCustomerController {
       password: string;
     };
 
-    const customerService = new CreateCustomerService();
-    const customer = await customerService.execute({
-      name,
-      email,
-      cpf,
-      password,
-    });
+    if (!name || !email || !cpf || !password) {
+      return reply.status(400).send({
+        success: false,
+        message: "All fields are required.",
+      });
+    }
 
-    reply.send(customer);
+    const customerService = new CreateCustomerService();
+
+    try {
+      const customer = await customerService.execute({
+        name,
+        email,
+        cpf,
+        password,
+      });
+
+      return reply.status(201).send({
+        success: true,
+        customer,
+      });
+    } catch (error) {
+      return reply.status(500).send({
+        success: false,
+        message: "Error creating customer. Please try again.",
+      });
+    }
   }
 }
