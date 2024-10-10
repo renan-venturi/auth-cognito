@@ -1,20 +1,12 @@
-const AmazonCognitoIdentity = require("amazon-cognito-identity-js");
-// import * as AWS from "aws-sdk/global";
+import { CognitoUserAttribute, CognitoUserPool, CognitoUserSession } from "amazon-cognito-identity-js";
 import * as AWS from "aws-sdk";
-import {
-  CognitoUserAttribute,
-  CognitoUserPool,
-  CognitoUserSession,
-} from "amazon-cognito-identity-js";
+import logger from "../utils/logger"; // Ajuste o caminho conforme necessário
 import { assumeRoleCredentialsByRoleArn } from "./sts.role-assumption";
-
+const AmazonCognitoIdentity = require("amazon-cognito-identity-js");
 
 export class CognitoService {
   cognitoServiceProvider = new AWS.CognitoIdentityServiceProvider({
     region: process.env.COGNITO_REGION,
-    // credentials: assumeRoleCredentialsByRoleArn(
-    //   process.env.AWS_CROSS_ACCOUNT_ROLE
-    // ),
   });
 
   async createNewAccount(
@@ -25,7 +17,6 @@ export class CognitoService {
   ) {
     const userPoolData = await this.getUserPool();
     const userPool = new CognitoUserPool(userPoolData);
-
     const attributeList: CognitoUserAttribute[] = [];
 
     attributeList.push(
@@ -56,8 +47,10 @@ export class CognitoService {
     return new Promise((resolve, reject) => {
       userPool.signUp(email, password, attributeList, [], (err, result) => {
         if (err) {
+          logger.error("Error creating new account:", { error: err }); // Usando logger para erro
           reject(err);
         } else {
+          logger.info("Account created successfully for:", { email }); // Usando logger para sucesso
           const cognitoUser = result?.user;
           resolve(cognitoUser);
         }
@@ -88,6 +81,7 @@ export class CognitoService {
             const accessToken = result.getAccessToken().getJwtToken();
             const refreshToken = result.getRefreshToken().getToken();
 
+            logger.info("Login successful for:", { username }); // Usando logger para sucesso
             resolve({
               idToken: idToken,
               accessToken: accessToken,
@@ -95,40 +89,13 @@ export class CognitoService {
             });
           },
           onFailure: (err: any) => {
-            console.error("Erro no login:", err);
+            logger.error("Error during login:", { error: err }); // Usando logger para erro
             reject(err);
           },
         }
       );
     });
   }
-
-  // async createCognitoUser(username: string): Promise<any> {
-  //   const poolData = await this.getUserPool();
-  //   const userPool = new AmazonCognitoIdentity.CognitoUserPool(poolData);
-  //   const userData = {
-  //     Username: username,
-  //     Pool: userPool,
-  //   };
-  //   console.log(userData, '< -userData')
-  //   return await new AmazonCognitoIdentity.CognitoUser(userData);
-  // }
-
-  // async deleteUser(username: string) {
-  //   return new Promise((resolve, reject) => {
-  //     this.createCognitoUser(username).then((cognitoUser) => {
-  //       cognitoUser.deleteUser((err: any, result: void) => {
-  //         if (err) {
-  //           console.log('entrou aqui???')
-  //           console.error('Erro ao remover o usuário no Cognito:', err);
-  //           reject(err);
-  //         }
-  //         console.log(`Usuário ${username} removido com sucesso no Cognito.`);
-  //         resolve(result);
-  //       });
-  //     });
-  //   });
-  // }
 
   async deleteUser(username: string) {
     return new Promise((resolve, reject) => {
@@ -139,11 +106,12 @@ export class CognitoService {
         },
         function (err: any, result: {}) {
           if (err) {
-            console.log(err, 'caiu no if')
+            logger.error("Error deleting user:", { username, error: err }); // Usando logger para erro
             reject(err);
+          } else {
+            logger.info("User deleted successfully:", { username }); // Usando logger para sucesso
+            resolve(result);
           }
-          console.log('passou do if')
-          resolve(result);
         }
       );
     });

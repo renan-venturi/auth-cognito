@@ -1,41 +1,43 @@
 import prismaClient from "../prisma";
+import logger from "../utils/logger";
 import { CognitoService } from "./CognitoService";
 
-interface DeleteCustomerProps{
-    id: string;
+interface DeleteCustomerProps {
+  id: string;
 }
 
-class  DeleteCustomerService{
-    async execute({id}:  DeleteCustomerProps) {
-        try {
-            const cognitoService = new CognitoService();
-       
-            // const findCustomer = await prismaClient.customer.findFirst({
-            //     where: {
-            //         id
-            //     }
-            // })
-    
-            // if(!findCustomer){
-            //     throw new Error("Client not exist")
-            // }
-    
-            // await prismaClient.customer.delete({
-            //     where: {
-            //         id: findCustomer.id
-            //     }
-            // })
-    
-            await cognitoService.deleteUser('renan@teste.com')
-    
-            return 'Usuario removido'
-            
-        } catch (error) {
-            return error
-        }
+export class DeleteCustomerService {
+  async execute({ id }: DeleteCustomerProps) {
+    const cognitoService = new CognitoService();
 
-      
+    try {
+      logger.info(`Starting the deletion process for customer with ID: ${id}`);
+
+      const findCustomer = await prismaClient.customer.findFirst({
+        where: { id },
+      });
+
+      if (!findCustomer) {
+        logger.warn(`Customer with ID: ${id} does not exist`);
+        throw new Error("Client does not exist");
+      }
+
+      await prismaClient.customer.delete({
+        where: { id: findCustomer.id },
+      });
+      logger.info(
+        `Customer with ID: ${id} successfully deleted from the database`
+      );
+
+      await cognitoService.deleteUser(findCustomer.email);
+      logger.info(
+        `User with email: ${findCustomer.email} successfully deleted from Cognito`
+      );
+
+      return "User removed successfully";
+    } catch (error) {
+      logger.error(`Error occurred while deleting customer: ${error}`);
+      throw error; 
     }
+  }
 }
-
-export { DeleteCustomerService};

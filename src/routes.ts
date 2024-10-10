@@ -6,7 +6,7 @@ import {
 } from "fastify";
 import { CreateCustomerController } from "./controllers/CreateCustomerController";
 import { ListCustomerController } from "./controllers/ListCustomersController";
-import { DeleteCustomerSController } from "./controllers/DeleteCustomerController";
+import { DeleteCustomerController } from "./controllers/DeleteCustomerController";
 import { LoginController } from "./controllers/LoginController";
 
 export async function routes(
@@ -27,7 +27,7 @@ export async function routes(
   fastify.delete(
     "/delete",
     async (request: FastifyRequest, reply: FastifyReply) => {
-      return new DeleteCustomerSController().handle(request, reply);
+      return new DeleteCustomerController().handle(request, reply);
     }
   );
 

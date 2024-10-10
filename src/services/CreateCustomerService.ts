@@ -1,44 +1,45 @@
 import prismaClient from "../prisma";
+import logger from "../utils/logger";
 import { CognitoService } from "./CognitoService";
 
-interface CreateCustomerProps{
-    name:string;
-    email: string;
-    cpf: string;
-    password: string;
+interface CreateCustomerProps {
+  name: string;
+  email: string;
+  cpf: string;
+  password: string;
 }
 
-class CreateCustomerService{
-    async execute({name, email, cpf, password}: CreateCustomerProps) {
-        
-        const cognitoService = new CognitoService();
-       
-        if(!name || !email) {
-            throw new Error("Preencha todos os campos")
-        }
+export class CreateCustomerService {
+  async execute({ name, email, cpf, password }: CreateCustomerProps) {
+    const cognitoService = new CognitoService();
 
-        const customer = await prismaClient.customer.create({
-            data:{
-                name,
-                email,
-                cpf,
-                status: true
-            }
-        })
-        console.log('chegou ate aqui')
+    try {
+      if (!name || !email) {
+        logger.warn("Attempt to create a customer with missing fields.");
+        throw new Error("Preencha todos os campos");
+      }
 
-        await cognitoService.createNewAccount(
-            email,
-            cpf,
-            password,
-            name
-            // customer.id
-          );
+      const customer = await prismaClient.customer.create({
+        data: {
+          name,
+          email,
+          cpf,
+          status: true,
+        },
+      });
+      logger.info(`Customer created successfully: ${JSON.stringify(customer)}`);
 
-          console.log('é para ter criado no cognito')
+      await cognitoService.createNewAccount(email, cpf, password, name);
+      logger.info(`Cognito account created for email: ${email}`);
 
-        return customer;
+      return customer;
+    } catch (error) {
+      logger.error(
+        `Error while creating customer: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
+      throw error; 
     }
+  }
 }
-
-export {CreateCustomerService};
