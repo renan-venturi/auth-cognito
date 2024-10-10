@@ -1,4 +1,5 @@
 import prismaClient from "../prisma";
+import { formatEmail } from "../utils/functions.commons";
 import logger from "../utils/logger";
 import { CognitoService } from "./CognitoService";
 
@@ -19,18 +20,20 @@ export class CreateCustomerService {
         throw new Error("Preencha todos os campos");
       }
 
+      const formattedEmail = await formatEmail(email)
+
       const customer = await prismaClient.customer.create({
         data: {
           name,
-          email,
+          email: formattedEmail,
           cpf,
           status: true,
         },
       });
       logger.info(`Customer created successfully: ${JSON.stringify(customer)}`);
 
-      await cognitoService.createNewAccount(email, cpf, password, name);
-      logger.info(`Cognito account created for email: ${email}`);
+      await cognitoService.createNewAccount(formattedEmail, cpf, password, name);
+      logger.info(`Cognito account created for email: ${formattedEmail}`);
 
       return customer;
     } catch (error) {
