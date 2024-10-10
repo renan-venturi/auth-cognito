@@ -1,4 +1,5 @@
 import prismaClient from "../prisma";
+import { formatEmail, validateCPF } from "../utils/functions.commons";
 import logger from "../utils/logger";
 import { CognitoService } from "./CognitoService";
 
@@ -14,23 +15,37 @@ export class CreateCustomerService {
     const cognitoService = new CognitoService();
 
     try {
+      const isValidCPF = validateCPF(cpf);
+
+      if (!isValidCPF) {
+        logger.error("CPF is invalid.");
+        throw new Error("CPF is invalid.");
+      }
+
       if (!name || !email) {
         logger.warn("Attempt to create a customer with missing fields.");
-        throw new Error("Preencha todos os campos");
+        throw new Error("Fill in all fields");
       }
+
+      const formattedEmail = await formatEmail(email);
 
       const customer = await prismaClient.customer.create({
         data: {
           name,
-          email,
+          email: formattedEmail,
           cpf,
           status: true,
         },
       });
       logger.info(`Customer created successfully: ${JSON.stringify(customer)}`);
 
-      await cognitoService.createNewAccount(email, cpf, password, name);
-      logger.info(`Cognito account created for email: ${email}`);
+      await cognitoService.createNewAccount(
+        formattedEmail,
+        cpf,
+        password,
+        name
+      );
+      logger.info(`Cognito account created for email: ${formattedEmail}`);
 
       return customer;
     } catch (error) {
@@ -39,7 +54,7 @@ export class CreateCustomerService {
           error instanceof Error ? error.message : "Unknown error"
         }`
       );
-      throw error; 
+      throw error;
     }
   }
 }
