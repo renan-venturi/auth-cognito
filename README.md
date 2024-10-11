@@ -44,6 +44,7 @@ Você pode iniciar o serviço de autenticação com o seguinte comando:
 ## Exemplo de Rotas
 * Registrar usuário: POST `/create`
 * Login de usuário: POST `/login`
+* Trocar senha: POST `/change-password`
 * Excluir usuário: DELETE `/delete`
 * Listagem de usuários: GET `/list`
 
