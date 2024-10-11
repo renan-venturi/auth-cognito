@@ -8,6 +8,7 @@ import { CreateCustomerController } from "./controllers/CreateCustomerController
 import { ListCustomerController } from "./controllers/ListCustomersController";
 import { DeleteCustomerController } from "./controllers/DeleteCustomerController";
 import { LoginController } from "./controllers/LoginController";
+import { ChangePasswordController } from "./controllers/ChangePasswordController";
 
 export async function routes(
   fastify: FastifyInstance,
@@ -35,6 +36,13 @@ export async function routes(
     "/login",
     async (request: FastifyRequest, reply: FastifyReply) => {
       return new LoginController().handle(request, reply);
+    }
+  );
+
+  fastify.post(
+    "/change-password",
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      return new ChangePasswordController().handle(request, reply);
     }
   );
 }

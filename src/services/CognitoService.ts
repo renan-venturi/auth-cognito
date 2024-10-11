@@ -178,6 +178,23 @@ export class CognitoService {
     }
   }
 
+  async adminChangePassword(username: string, newPassword: string) {
+    const params = {
+      Password: newPassword,
+      UserPoolId: process.env.COGNITO_USER_POOL_ID!,
+      Username: username,
+      Permanent: true 
+    };
+  
+    try {
+      const data = await this.cognitoServiceProvider.adminSetUserPassword(params).promise();
+      logger.info('Password successfully changed:', data);
+    } catch (err) {
+      logger.error('Error changing password:', err);
+    }
+  }
+  
+
   async getUserPool(): Promise<any> {
     return {
       UserPoolId: process.env.COGNITO_USER_POOL_ID,
